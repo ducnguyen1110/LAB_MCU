@@ -51,7 +51,7 @@ int timer_dot_counter = 100;
 int timer_seg_counter = 25;
 
 
-int hour = 15, minute = 8, second = 40;
+int hour = 15, minute = 8, second = 50;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/

@@ -43,8 +43,8 @@
 TIM_HandleTypeDef htim2;
 
 /* USER CODE BEGIN PV */
-int timer_dot_counter = 100; //  1s
-int timer_seg_counter = 50;  // 500ms
+int timer_dot_counter = 100;
+int timer_seg_counter = 50;
 int led_index = 0;
 /* USER CODE END PV */
 

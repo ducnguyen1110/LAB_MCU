@@ -465,7 +465,7 @@ void update7SEG(int index) {
 
 void updateLEDMatrix(int index)
 {
-    // Tat tat ca column
+
     HAL_GPIO_WritePin(GPIOA,
                       GPIO_PIN_2 | GPIO_PIN_3 |
                       GPIO_PIN_10 | GPIO_PIN_11 |
@@ -473,7 +473,7 @@ void updateLEDMatrix(int index)
                       GPIO_PIN_14 | GPIO_PIN_15,
                       GPIO_PIN_SET);
 
-    // Xuat du lieu ROW
+
     HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8,
         (matrix_buffer[index] & 0x01) ? GPIO_PIN_RESET : GPIO_PIN_SET);
 
@@ -498,7 +498,7 @@ void updateLEDMatrix(int index)
     HAL_GPIO_WritePin(GPIOB, GPIO_PIN_15,
         (matrix_buffer[index] & 0x80) ? GPIO_PIN_RESET : GPIO_PIN_SET);
 
-    // Chon column
+
     switch(index)
     {
         case 0:
@@ -537,13 +537,7 @@ void updateLEDMatrix(int index)
             break;
     }
 }
-void shiftLeft(void)
-{
-    for (uint8_t i = 0; i < 8; i++)
-    {
-        matrix_buffer[i] <<= 1;
-    }
-}
+
 void createAAnimation(int8_t shift)
 {
     uint8_t A[8] =
