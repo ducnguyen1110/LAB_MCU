@@ -77,10 +77,10 @@ Disassembly of section .text:
  8000148:	0800317c 	.word	0x0800317c
 
 0800014c <UART_Printf>:
+/* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-/* Producer and consumer both run in main, never in the timer interrupt. */
 static void UART_Printf(const char *format, ...)
 {
  800014c:	b40f      	push	{r0, r1, r2, r3}
@@ -177,7 +177,6 @@ static void UART_Printf(const char *format, ...)
 
 080001e8 <UART_Poll>:
 
-/* Send at most one byte without waiting for the UART. */
 static void UART_Poll(void)
 {
  80001e8:	b480      	push	{r7}
@@ -462,7 +461,6 @@ static void Task_OneShot210ms(void)
 
 0800039c <Task_Cancelled>:
 
-/* This must not execute: Task_DeleteDemo cancels it at 600 ms. */
 static void Task_Cancelled(void)
 {
  800039c:	b580      	push	{r7, lr}
@@ -592,7 +590,6 @@ int main(void)
  8000452:	4821      	ldr	r0, [pc, #132]	; (80004d8 <main+0xe4>)
  8000454:	f7ff ff04 	bl	8000260 <Add_Task>
 
-  /* Register out of order; execution must be 70, 130, then 210 ms. */
   Add_Task(Task_OneShot210ms, 21, 0);
  8000458:	2200      	movs	r2, #0
  800045a:	2115      	movs	r1, #21
@@ -1052,8 +1049,8 @@ __STATIC_FORCEINLINE void __disable_irq(void)
  80006e6:	e7fe      	b.n	80006e6 <Error_Handler+0x8>
 
 080006e8 <SCH_Enter_Critical>:
- * while main is busy executing a callback or processing other work.
- */
+static uint32_t next_task_id = 1U;
+
 static volatile uint32_t overdue_ticks;
 
 static uint32_t SCH_Enter_Critical(void)
@@ -1072,7 +1069,7 @@ __STATIC_FORCEINLINE uint32_t __get_PRIMASK(void)
   return(result);
  80006f4:	683b      	ldr	r3, [r7, #0]
 #ifdef SCH_HOST_TEST
-    return 0U; /* Single-threaded host tests inject interrupts explicitly. */
+    return 0U;
 #else
     uint32_t previous = __get_PRIMASK();
  80006f6:	607b      	str	r3, [r7, #4]
@@ -1126,9 +1123,6 @@ __STATIC_FORCEINLINE void __set_PRIMASK(uint32_t priMask)
 
 08000728 <SCH_Insert_Task>:
 
-/* Main only, interrupts masked. Releases at 50, 100, 150 ticks are stored
- * as delta delays 50 -> 50 -> 50. Equal releases are ordered by TaskID.
- */
 static void SCH_Insert_Task(uint32_t index, uint32_t delay)
 {
  8000728:	b480      	push	{r7}
@@ -1326,7 +1320,6 @@ static void SCH_Insert_Task(uint32_t index, uint32_t delay)
 
 08000870 <SCH_Remove_Task>:
 
-/* Main only, interrupts masked. Preserve later release times on removal. */
 static void SCH_Remove_Task(uint32_t index, uint32_t previous)
 {
  8000870:	b480      	push	{r7}
@@ -1418,9 +1411,6 @@ static void SCH_Remove_Task(uint32_t index, uint32_t previous)
 
 08000910 <SCH_Prepare_Head>:
 
-/* Apply elapsed time to ONE head. Main will dispatch remaining overdue
- * tasks in order; the timer ISR never needs to walk the queue.
- */
 static void SCH_Prepare_Head(uint32_t elapsed)
 {
  8000910:	b480      	push	{r7}
@@ -1626,9 +1616,6 @@ void SCH_Init(void)
 
 08000a74 <SCH_Update>:
 
-/* Like Program 1.9: update Delay and mark RunMe, NEVER run the callback.
- * The delta queue needs only one countdown, so there is no O(n) search.
- */
 void SCH_Update(void)
 {
  8000a74:	b480      	push	{r7}
@@ -1911,7 +1898,6 @@ uint32_t SCH_Add_Task(void (*pFunction)(void),
  8000c3e:	681b      	ldr	r3, [r3, #0]
  8000c40:	617b      	str	r3, [r7, #20]
 
-    /* Delay for a newly added task starts NOW, even if the head is overdue. */
     SCH_Insert_Task(index, overdue_ticks + delay_ticks);
  8000c42:	4b0b      	ldr	r3, [pc, #44]	; (8000c70 <SCH_Add_Task+0x108>)
  8000c44:	681a      	ldr	r2, [r3, #0]
@@ -2046,9 +2032,6 @@ uint8_t SCH_Delete_Task(uint32_t taskID)
 
 08000d2c <SCH_Dispatch_Tasks>:
 
-/* Like Program 1.11: execute only when RunMe is set. Searches and periodic
- * re-insertion happen in main, outside SCH_Update().
- */
 void SCH_Dispatch_Tasks(void)
 {
  8000d2c:	b580      	push	{r7, lr}
@@ -2137,7 +2120,7 @@ void SCH_Dispatch_Tasks(void)
  8000dbe:	69bb      	ldr	r3, [r7, #24]
  8000dc0:	2b00      	cmp	r3, #0
  8000dc2:	d10e      	bne.n	8000de2 <SCH_Dispatch_Tasks+0xb6>
-        SCH_tasks_G[index] = (sTask){0}; /* One-shot: release the slot. */
+        SCH_tasks_G[index] = (sTask){0};
  8000dc4:	4910      	ldr	r1, [pc, #64]	; (8000e08 <SCH_Dispatch_Tasks+0xdc>)
  8000dc6:	6a3a      	ldr	r2, [r7, #32]
  8000dc8:	4613      	mov	r3, r2
@@ -2154,7 +2137,6 @@ void SCH_Dispatch_Tasks(void)
  8000dde:	6113      	str	r3, [r2, #16]
  8000de0:	e003      	b.n	8000dea <SCH_Dispatch_Tasks+0xbe>
     } else {
-        /* Repeat from the scheduled release, not callback completion. */
         SCH_Insert_Task(index, period);
  8000de2:	69b9      	ldr	r1, [r7, #24]
  8000de4:	6a38      	ldr	r0, [r7, #32]
@@ -2169,7 +2151,6 @@ void SCH_Dispatch_Tasks(void)
  8000df4:	6a78      	ldr	r0, [r7, #36]	; 0x24
  8000df6:	f7ff fc87 	bl	8000708 <SCH_Exit_Critical>
 
-    /* Restore interrupt control BEFORE executing application code. */
     (*function_to_run)();
  8000dfa:	69fb      	ldr	r3, [r7, #28]
  8000dfc:	4798      	blx	r3

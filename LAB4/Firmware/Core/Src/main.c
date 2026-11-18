@@ -51,7 +51,6 @@ UART_HandleTypeDef huart1;
 static char uart_tx_buffer[UART_TX_BUFFER_SIZE];
 static uint32_t uart_tx_head;
 static uint32_t uart_tx_tail;
-/* Watch this value in the debugger to observe the silent 10 ms callback. */
 static volatile uint32_t last_tick_callback_ms;
 static uint32_t cancelled_task_id;
 /* USER CODE END PV */
@@ -68,7 +67,6 @@ static void MX_USART1_UART_Init(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-/* Producer and consumer both run in main, never in the timer interrupt. */
 static void UART_Printf(const char *format, ...)
 {
     char message[96];
@@ -94,7 +92,6 @@ static void UART_Printf(const char *format, ...)
     }
 }
 
-/* Send at most one byte without waiting for the UART. */
 static void UART_Poll(void)
 {
     if (uart_tx_tail != uart_tx_head &&
@@ -171,7 +168,6 @@ static void Task_OneShot210ms(void)
     Log_Event("ONESHOT 210ms");
 }
 
-/* This must not execute: Task_DeleteDemo cancels it at 600 ms. */
 static void Task_Cancelled(void)
 {
     Log_Event("ERROR: cancelled task ran");
@@ -232,7 +228,6 @@ int main(void)
   Add_Task(Task_LED5, 250, 250);
   Add_Task(Task_Tick10ms, 1, 1);
 
-  /* Register out of order; execution must be 70, 130, then 210 ms. */
   Add_Task(Task_OneShot210ms, 21, 0);
   Add_Task(Task_OneShot70ms, 7, 0);
   Add_Task(Task_OneShot130ms, 13, 0);

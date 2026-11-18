@@ -6,25 +6,20 @@
 
 #define SCH_NO_INDEX SCH_MAX_TASKS
 
-/* Task fields and task array from Program 1.7 of the lab handout. */
 volatile sTask SCH_tasks_G[SCH_MAX_TASKS];
 volatile uint8_t Error_code_G = ERROR_SCH_NONE;
 
-/* Queue links are slot indices, independent of the stable TaskID. */
 static uint32_t Next[SCH_MAX_TASKS];
 static volatile uint32_t Head = SCH_NO_INDEX;
 static volatile uint32_t tick_count;
 static uint32_t next_task_id = 1U;
 
-/* Elapsed ticks after a ready head's scheduled release. Do not lose time
- * while main is busy executing a callback or processing other work.
- */
 static volatile uint32_t overdue_ticks;
 
 static uint32_t SCH_Enter_Critical(void)
 {
 #ifdef SCH_HOST_TEST
-    return 0U; /* Single-threaded host tests inject interrupts explicitly. */
+    return 0U;
 #else
     uint32_t previous = __get_PRIMASK();
     __disable_irq();
@@ -41,9 +36,6 @@ static void SCH_Exit_Critical(uint32_t previous)
 #endif
 }
 
-/* Main only, interrupts masked. Releases at 50, 100, 150 ticks are stored
- * as delta delays 50 -> 50 -> 50. Equal releases are ordered by TaskID.
- */
 static void SCH_Insert_Task(uint32_t index, uint32_t delay)
 {
     uint32_t previous = SCH_NO_INDEX;
@@ -76,7 +68,6 @@ static void SCH_Insert_Task(uint32_t index, uint32_t delay)
     }
 }
 
-/* Main only, interrupts masked. Preserve later release times on removal. */
 static void SCH_Remove_Task(uint32_t index, uint32_t previous)
 {
     uint32_t following = Next[index];
@@ -92,9 +83,6 @@ static void SCH_Remove_Task(uint32_t index, uint32_t previous)
     SCH_tasks_G[index].RunMe = 0U;
 }
 
-/* Apply elapsed time to ONE head. Main will dispatch remaining overdue
- * tasks in order; the timer ISR never needs to walk the queue.
- */
 static void SCH_Prepare_Head(uint32_t elapsed)
 {
     if (Head == SCH_NO_INDEX) {
@@ -125,9 +113,6 @@ void SCH_Init(void)
     SCH_Exit_Critical(previous);
 }
 
-/* Like Program 1.9: update Delay and mark RunMe, NEVER run the callback.
- * The delta queue needs only one countdown, so there is no O(n) search.
- */
 void SCH_Update(void)
 {
     tick_count++;
@@ -178,7 +163,6 @@ uint32_t SCH_Add_Task(void (*pFunction)(void),
     SCH_tasks_G[index].TaskID = next_task_id++;
     uint32_t id = SCH_tasks_G[index].TaskID;
 
-    /* Delay for a newly added task starts NOW, even if the head is overdue. */
     SCH_Insert_Task(index, overdue_ticks + delay_ticks);
     SCH_Prepare_Head(overdue_ticks);
     SCH_Exit_Critical(previous);
@@ -209,9 +193,6 @@ uint8_t SCH_Delete_Task(uint32_t taskID)
     return 1U;
 }
 
-/* Like Program 1.11: execute only when RunMe is set. Searches and periodic
- * re-insertion happen in main, outside SCH_Update().
- */
 void SCH_Dispatch_Tasks(void)
 {
     uint32_t previous = SCH_Enter_Critical();
@@ -227,14 +208,12 @@ void SCH_Dispatch_Tasks(void)
     SCH_Remove_Task(index, SCH_NO_INDEX);
 
     if (period == 0U) {
-        SCH_tasks_G[index] = (sTask){0}; /* One-shot: release the slot. */
+        SCH_tasks_G[index] = (sTask){0};
     } else {
-        /* Repeat from the scheduled release, not callback completion. */
         SCH_Insert_Task(index, period);
     }
     SCH_Prepare_Head(overdue_ticks);
     SCH_Exit_Critical(previous);
 
-    /* Restore interrupt control BEFORE executing application code. */
     (*function_to_run)();
 }
