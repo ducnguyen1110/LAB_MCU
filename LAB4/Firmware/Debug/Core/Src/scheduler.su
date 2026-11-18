@@ -1,0 +1,11 @@
+scheduler.c:24:17:SCH_Enter_Critical	16	static,ignoring_inline_asm
+scheduler.c:35:13:SCH_Exit_Critical	24	static,ignoring_inline_asm
+scheduler.c:47:13:SCH_Insert_Task	24	static
+scheduler.c:80:13:SCH_Remove_Task	24	static
+scheduler.c:98:13:SCH_Prepare_Head	16	static
+scheduler.c:113:6:SCH_Init	40	static
+scheduler.c:131:6:SCH_Update	4	static
+scheduler.c:149:10:get_time	4	static
+scheduler.c:154:10:SCH_Add_Task	40	static
+scheduler.c:188:9:SCH_Delete_Task	48	static
+scheduler.c:215:6:SCH_Dispatch_Tasks	48	static

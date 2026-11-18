@@ -1,0 +1,7 @@
+led_display.c:38:6:update_led_buffer_mode	16	static
+led_display.c:45:13:display7SEG	24	static
+led_display.c:55:6:scan_7seg_display	8	static
+led_display.c:82:13:set_traffic_WaitPins	16	static
+led_display.c:108:6:reset_normal_traffic	8	static
+led_display.c:118:6:run_normal_traffic	8	static
+led_display.c:166:6:blink_traffic_leds	24	static
